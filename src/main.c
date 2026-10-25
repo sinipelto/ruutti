@@ -458,8 +458,12 @@ static void start_session(const struct account *acct) {
     const char *runuser = find_runuser();
     if (runuser != NULL) {
         char *argv[] = {"runuser", "--login", "--", (char *)acct->name, NULL};
-        fflush(NULL);
-        execve(runuser, argv, environ);
+        /* runuser rejects a caller whose real uid is not 0. A setuid-root
+           ruutti keeps the invoking user's real uid until this call. */
+        if (setuid(0) == 0) {
+            fflush(NULL);
+            execve(runuser, argv, environ);
+        }
     }
     start_fallback(acct);
 }
